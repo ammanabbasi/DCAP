@@ -1,0 +1,19 @@
+<!-- File: app/src/main/res/xml/backup_rules.xml -->
+<!-- Purpose: Android Auto Backup configuration -->
+<!-- Dependencies: None -->
+
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Include app data -->
+    <include domain="database" path="." />
+    <include domain="sharedpref" path="." />
+    <include domain="file" path="documents/" />
+    
+    <!-- Exclude sensitive data -->
+    <exclude domain="database" path="dealervait_secure_prefs" />
+    <exclude domain="file" path="cache/" />
+    <exclude domain="file" path="temp/" />
+    
+    <!-- Exclude any directories that contain temporary or sensitive data -->
+    <exclude domain="file" path="logs/" />
+</full-backup-content>

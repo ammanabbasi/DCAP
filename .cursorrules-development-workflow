@@ -1,0 +1,278 @@
+---
+description: Development Agent Workflow - Cursor Rules for systematic project implementation following documentation-driven development
+alwaysApply: true
+---
+
+# Development Agent Workflow - Cursor Rules
+
+## Primary Directive
+You are a development agent implementing a project. Follow established documentation and maintain consistency.
+
+## Core Workflow Process
+
+### Before Starting Any Task
+- Consult `/Docs/Implementation.md` for current stage and available tasks
+- Check task dependencies and prerequisites
+- Verify scope understanding
+
+### Task Execution Protocol
+
+#### 1. Task Assessment
+- Read subtask from `/Docs/Implementation.md`
+- Assess subtask complexity:
+  - **Simple subtask:** Implement directly
+  - **Complex subtask:** Create a todo list using the todo_write tool
+
+#### 2. Documentation Research
+- Check `/Docs/Implementation.md` for relevant documentation links in the subtask
+- Read and understand documentation before implementing
+
+#### 3. UI/UX Implementation
+- Consult `/Docs/UI_UX_doc.md` before implementing any UI/UX elements
+- Follow design system specifications and responsive requirements
+
+#### 4. Project Structure Compliance
+- Check `/Docs/project_structure.md` before:
+  - Running commands
+  - Creating files/folders
+  - Making structural changes
+  - Adding dependencies
+
+#### 5. Error Handling
+- Check `/Docs/Bug_tracking.md` for similar issues before fixing
+- Document all errors and solutions in Bug_tracking.md
+- Include error details, root cause, and resolution steps
+
+#### 6. Task Completion
+Mark tasks complete only when:
+- All functionality implemented correctly
+- Code follows project structure guidelines
+- UI/UX matches specifications (if applicable)
+- No errors or warnings remain
+- All task list items completed (if applicable)
+
+### File Reference Priority
+1. `/Docs/Bug_tracking.md` - Check for known issues first
+2. `/Docs/Implementation.md` - Main task reference
+3. `/Docs/project_structure.md` - Structure guidance
+4. `/Docs/UI_UX_doc.md` - Design requirements
+
+## Implementation Guidelines
+
+### Code Quality Standards
+- **TypeScript First**: Use TypeScript for all new code
+- **Error Handling**: Implement comprehensive error handling
+- **Input Validation**: Validate all user inputs
+- **Security**: Follow security best practices
+- **Performance**: Optimize for performance from the start
+- **Testing**: Include tests for new functionality
+- **Documentation**: Comment complex logic and functions
+
+### File Creation Standards
+- **Naming Conventions**: Follow project naming standards
+- **File Organization**: Place files in correct directories
+- **Import Structure**: Organize imports logically
+- **Export Patterns**: Use consistent export patterns
+
+### Database Operations
+- **Migrations**: Use TypeORM migrations for schema changes
+- **Relationships**: Define proper entity relationships
+- **Indexing**: Add appropriate database indexes
+- **Validation**: Use class-validator decorators
+
+### API Development
+- **RESTful Design**: Follow REST principles
+- **Authentication**: Implement proper auth middleware
+- **Validation**: Use Joi schemas for input validation
+- **Error Responses**: Return consistent error formats
+- **Documentation**: Document all endpoints
+
+### Frontend Development
+- **Component Structure**: Follow React Native best practices
+- **State Management**: Use Redux Toolkit patterns
+- **Navigation**: Follow React Navigation patterns
+- **Styling**: Use consistent styling approach
+- **Accessibility**: Implement accessibility features
+
+## Error Documentation Protocol
+
+### When Encountering Errors
+1. **Check Bug_tracking.md first** for similar issues
+2. **If similar issue exists**: Follow the documented solution
+3. **If new issue**: Document using the bug tracking template
+
+### Bug Documentation Format
+```markdown
+## Bug ID: [YYYY-MM-DD]-[CATEGORY]-[XXX]
+
+### Summary
+[Brief description]
+
+### Severity: [Critical/High/Medium/Low]
+### Category: [Backend/Frontend/Infrastructure/Integration/Performance/Security]
+### Environment: [Development/Staging/Production]
+
+### Description
+[Detailed description including steps to reproduce]
+
+### Error Details
+```
+[Error messages, stack traces, logs]
+```
+
+### Root Cause Analysis
+[Technical explanation of why the error occurred]
+
+### Solution Implemented
+[Detailed steps taken to resolve the issue]
+
+### Prevention Measures
+[How to prevent this issue from recurring]
+
+### Testing Verification
+[How the fix was verified to work correctly]
+
+### Related Issues
+[Links to related bugs or feature requests]
+
+### Reporter: [Name]
+### Date Reported: [YYYY-MM-DD]
+### Date Resolved: [YYYY-MM-DD]
+### Resolution Time: [Duration]
+
+---
+```
+
+## Task Management Protocol
+
+### Using TODO Lists for Complex Tasks
+When a subtask is complex, create a todo list with:
+- **Specific, actionable items**
+- **Logical sequence of steps**
+- **Dependencies between tasks**
+- **Estimated time for each item**
+
+### Task Progress Tracking
+- **Mark items complete** as soon as they're finished
+- **Update status regularly** to show progress
+- **Document blockers** and how they were resolved
+- **Communicate completion** when all items are done
+
+### Task Dependencies
+- **Check prerequisites** before starting tasks
+- **Verify completion** of dependent tasks
+- **Coordinate with team** on shared dependencies
+- **Update documentation** when dependencies change
+
+## Quality Assurance Protocol
+
+### Before Committing Code
+- [ ] Code compiles without errors
+- [ ] All tests pass
+- [ ] Linting passes
+- [ ] Type checking passes
+- [ ] Functionality works as expected
+- [ ] UI matches design specifications
+- [ ] Error handling is implemented
+- [ ] Code is properly commented
+
+### Testing Requirements
+- **Unit Tests**: Test individual functions and methods
+- **Integration Tests**: Test component interactions
+- **End-to-End Tests**: Test complete user workflows
+- **Error Scenarios**: Test error conditions and edge cases
+
+### Code Review Checklist
+- **Security**: No security vulnerabilities
+- **Performance**: No obvious performance issues
+- **Maintainability**: Code is readable and maintainable
+- **Documentation**: Complex logic is documented
+- **Standards**: Follows project coding standards
+
+## Communication Protocol
+
+### Progress Updates
+- **Regular updates** on task progress
+- **Clear communication** of blockers and issues
+- **Documentation** of decisions and changes
+- **Coordination** with other team members
+
+### Issue Escalation
+- **Minor issues**: Document and resolve independently
+- **Major blockers**: Communicate immediately to team
+- **System-wide issues**: Escalate to project lead
+- **Critical bugs**: Follow emergency response protocol
+
+## Deployment Protocol
+
+### Before Deployment
+- [ ] All tests pass in staging environment
+- [ ] Code review completed and approved
+- [ ] Database migrations tested
+- [ ] Environment variables configured
+- [ ] Backup procedures in place
+- [ ] Rollback plan documented
+
+### Deployment Steps
+1. **Create deployment branch** from main
+2. **Run final tests** in staging environment
+3. **Execute deployment** following documented procedures
+4. **Verify deployment** success in production
+5. **Monitor systems** for issues post-deployment
+6. **Document deployment** results and any issues
+
+## Maintenance Protocol
+
+### Regular Maintenance Tasks
+- **Update dependencies** regularly
+- **Monitor system performance**
+- **Review and update documentation**
+- **Clean up unused code and files**
+- **Backup critical data**
+- **Review security settings**
+
+### Knowledge Management
+- **Document new patterns** and solutions
+- **Share knowledge** with team members
+- **Update procedures** based on lessons learned
+- **Maintain institutional knowledge**
+
+## Critical Rules
+
+### NEVER Actions
+- **NEVER** skip documentation consultation
+- **NEVER** mark tasks complete without proper testing
+- **NEVER** ignore project structure guidelines
+- **NEVER** implement UI without checking UI_UX_doc.md
+- **NEVER** fix errors without checking Bug_tracking.md first
+- **NEVER** commit code that doesn't compile or pass tests
+- **NEVER** deploy without proper testing
+
+### ALWAYS Actions
+- **ALWAYS** document errors and solutions
+- **ALWAYS** follow the established workflow process
+- **ALWAYS** check for existing solutions before creating new ones
+- **ALWAYS** test thoroughly before marking tasks complete
+- **ALWAYS** maintain consistency with established patterns
+- **ALWAYS** consider security implications
+- **ALWAYS** update documentation when making changes
+
+## Emergency Response Protocol
+
+### Critical System Issues
+1. **Immediate assessment** of severity and impact
+2. **Containment** to prevent further damage
+3. **Communication** to stakeholders
+4. **Resolution** using all available resources
+5. **Post-incident review** and documentation
+6. **Process improvement** to prevent recurrence
+
+### Security Incidents
+1. **Immediate isolation** of affected systems
+2. **Assessment** of breach scope and impact
+3. **Notification** of security team and stakeholders
+4. **Investigation** and evidence collection
+5. **Remediation** and system hardening
+6. **Documentation** and lessons learned
+
+Remember: Build a cohesive, well-documented, and maintainable project. Every decision should support overall project goals and maintain consistency with established patterns. The goal is sustainable, high-quality software development that serves users effectively and can be maintained and extended over time.

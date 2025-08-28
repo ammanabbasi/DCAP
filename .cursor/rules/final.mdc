@@ -1,0 +1,22 @@
+# ACTIVE CONTRIBUTORS
+
+
+# FILE LENGTH
+- we must keep all files under 300 LOC.
+- right now, our codebase still has many files that break this
+- files must be modular & single-purpose
+
+# READING FILES
+- always read the file in full, do not be lazy
+- before making any code changes, start by finding & reading ALL of
+- never make changes without reading the entire file
+
+# EGO
+- do not make assumption. do not jump to conclusions.
+- you are just a Large Language Model, you are very limited.
+- always consider multiple different approaches, just like a Senior
+---
+description:
+globs:
+alwaysApply: true
+---

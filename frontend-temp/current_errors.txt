@@ -1,0 +1,56 @@
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(573,45): error TS1005: '=>' expected.
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(573,69): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(573,98): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(576,14): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(582,45): error TS1005: '=>' expected.
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(582,69): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(582,99): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(585,14): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(591,45): error TS1005: '=>' expected.
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(591,69): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(591,107): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(594,14): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(600,45): error TS1005: '=>' expected.
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(600,69): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(600,107): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(603,14): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(609,45): error TS1005: '=>' expected.
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(609,69): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(609,96): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(612,14): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(625,45): error TS1005: '=>' expected.
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(625,69): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(625,97): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(628,14): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(634,45): error TS1005: '=>' expected.
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(634,69): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(634,95): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(637,14): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(712,45): error TS1005: '=>' expected.
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(712,69): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(712,106): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(715,14): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(721,45): error TS1005: '=>' expected.
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(721,69): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(721,96): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(724,14): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(902,32): error TS1109: Expression expected.
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(902,57): error TS1005: ':' expected.
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(922,32): error TS1109: Expression expected.
+src/Screens/AddCrmProfileTabBoilerPlate/index.tsx(922,57): error TS1005: ':' expected.
+src/Screens/CarModelList/index.tsx(1475,60): error TS1005: ':' expected.
+src/Screens/CarModelList/index.tsx(1476,39): error TS1005: ',' expected.
+src/Screens/CarModelList/index.tsx(1476,40): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/CarModelList/index.tsx(1478,34): error TS1005: '}' expected.
+src/Screens/CarModelList/index.tsx(1479,21): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/Screens/CarModelList/index.tsx(1480,19): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/Screens/CarModelList/index.tsx(1480,20): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/Screens/CarModelList/index.tsx(1484,18): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/Screens/CarModelList/index.tsx(1499,36): error TS1109: Expression expected.
+src/Screens/CarModelList/index.tsx(1499,61): error TS1005: ':' expected.
+src/Screens/CreditApplication/CreditApp.tsx(58,26): error TS1109: Expression expected.
+src/Screens/CreditApplication/CreditApp.tsx(58,51): error TS1005: ':' expected.
+src/Screens/Crm/index.tsx(1186,36): error TS1109: Expression expected.
+src/Screens/Crm/index.tsx(1186,61): error TS1005: ':' expected.
+src/Screens/Purchase/index.tsx(346,28): error TS1109: Expression expected.
+src/Screens/Purchase/index.tsx(346,53): error TS1005: ':' expected.
