@@ -259,5 +259,6 @@ Desktop.ini
 # APK files (uncomment if you want to track APKs)
 # *.apk
 
-# Google Services JSON (uncomment if you want to track this)
-# google-services.json
+# Legacy directories to ignore
+frontend-temp/
+DCAP/
