@@ -1,0 +1,43 @@
+{
+  "name": "@dealerscloud/api-client",
+  "version": "1.0.0",
+  "description": "Minimal, production-ready TypeScript API client for DealersCloud backend",
+  "main": "dist/apiClient.js",
+  "types": "dist/apiClient.d.ts",
+  "files": [
+    "dist",
+    "src/*.ts",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "node exampleUsage.js",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "dealerscloud",
+    "api",
+    "client",
+    "typescript",
+    "automotive",
+    "dealership"
+  ],
+  "author": "DealersCloud Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dealerscloud/api-client.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dealerscloud/api-client/issues"
+  },
+  "homepage": "https://github.com/dealerscloud/api-client#readme"
+}

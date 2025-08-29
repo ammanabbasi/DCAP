@@ -1,4 +1,5 @@
 import 'react-native-gesture-handler/jestSetup';
+import '@testing-library/jest-native/extend-expect';
 import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
 
 // Global type declarations for Jest environment

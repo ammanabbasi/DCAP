@@ -41,7 +41,7 @@ const Basics = ({ route }: { route: any }) => {
   const previousParams = params?.params;
   const changeHandler = params?.changeHandler;
   const dispatch = useDispatch();
-  const { data, loading, error } = useSelector((state: any) => state) => state?.dropdownReducer);
+  const { data, loading, error } = useSelector((state: any) => state?.dropdownReducer);
   const navigation = useNavigation();
   const [houseTitle, setHouseTitle] = useState<any>(false);
   const [isNew, setIsNew] = useState<any>(false);
@@ -481,11 +481,11 @@ const Basics = ({ route }: { route: any }) => {
                 circleColorOn={Colors?.parrot}
                 containerStyle={{
                   width: wp(15),
-                  height: hp(3?.3),
+                  height: hp(3.3),
                   borderRadius: 25,
                   padding: 5,
                   borderColor: houseTitle ? Colors?.parrot : Colors?.lightWhite,
-                  borderWidth: wp(0?.3),
+                  borderWidth: wp(0.3),
                 }}
                 circleStyle={styles?.circleStyle}
               />
@@ -740,8 +740,8 @@ const Basics = ({ route }: { route: any }) => {
                 rightIcon={icn?.downArrow}
                 borderLess
                 value={date?.toDateString()}
-                style={{ paddingVertical: hp(0?.4) }}
-                onChangeText={() = numberOfCharacter={50}> { }}
+                style={{ paddingVertical: hp(0.4) }}
+                onChangeText={() => { }}
                 numberOfCharacter={20}
                 disabled
               />
@@ -867,11 +867,11 @@ const Basics = ({ route }: { route: any }) => {
                 containerStyle={{
                   marginTop: 16,
                   width: wp(15),
-                  height: hp(3?.3),
+                  height: hp(3.3),
                   borderRadius: 25,
                   padding: 5,
                   borderColor: isNew ? Colors?.parrot : Colors?.lightWhite,
-                  borderWidth: wp(0?.3),
+                  borderWidth: wp(0.3),
                 }}
                 circleStyle={styles?.circleStyle}
               />
@@ -888,11 +888,11 @@ const Basics = ({ route }: { route: any }) => {
                 containerStyle={{
                   marginTop: 16,
                   width: wp(15),
-                  height: hp(3?.3),
+                  height: hp(3.3),
                   borderRadius: 25,
                   padding: 5,
                   borderColor: houseTitle ? Colors?.parrot : Colors?.lightWhite,
-                  borderWidth: wp(0?.3),
+                  borderWidth: wp(0.3),
                 }}
                 circleStyle={styles?.circleStyle}
               />

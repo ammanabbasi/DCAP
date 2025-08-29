@@ -1,0 +1,619 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run tests daily at 6 AM UTC
+    - cron: '0 6 * * *'
+
+env:
+  NODE_VERSION: '18'
+  REGISTRY_URL: ghcr.io
+  IMAGE_NAME: dealerscloud
+
+jobs:
+  # Job 1: Lint and Type Check
+  lint-and-typecheck:
+    name: Lint and Type Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            */node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+            
+      - name: Install root dependencies
+        run: npm ci
+        
+      - name: Install workspace dependencies
+        run: |
+          cd backend && npm ci
+          cd ../web && npm ci
+          cd ../mobile && npm ci
+          cd ../shared && npm ci
+          
+      - name: Lint backend
+        run: cd backend && npm run lint
+        
+      - name: Lint web
+        run: cd web && npm run lint
+        
+      - name: Lint mobile
+        run: cd mobile && npm run lint
+        
+      - name: Lint shared
+        run: cd shared && npm run lint
+        
+      - name: TypeScript check backend
+        run: cd backend && npx tsc --noEmit
+        
+      - name: TypeScript check web
+        run: cd web && npx tsc --noEmit
+        
+      - name: TypeScript check mobile
+        run: cd mobile && npx tsc --noEmit
+        
+      - name: TypeScript check shared
+        run: cd shared && npx tsc --noEmit
+
+  # Job 2: Backend Tests
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_USER: dealerscloud
+          POSTGRES_DB: dealerscloud_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: |
+          cd backend && npm ci
+          cd ../shared && npm ci
+          
+      - name: Build shared package
+        run: cd shared && npm run build
+        
+      - name: Run database migrations
+        run: cd backend && npm run migrate
+        env:
+          DATABASE_URL: postgresql://dealerscloud:password@localhost:5432/dealerscloud_test
+          REDIS_URL: redis://localhost:6379
+          
+      - name: Run backend unit tests
+        run: cd backend && npm test -- --coverage --watchAll=false
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://dealerscloud:password@localhost:5432/dealerscloud_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-jwt-secret
+          JWT_REFRESH_SECRET: test-refresh-secret
+          ENCRYPTION_KEY: test-encryption-key-32-chars-long
+          
+      - name: Run backend integration tests
+        run: cd backend && npm run test:integration
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://dealerscloud:password@localhost:5432/dealerscloud_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-jwt-secret
+          
+      - name: Run backend security tests
+        run: cd backend && npm run test:security
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://dealerscloud:password@localhost:5432/dealerscloud_test
+          
+      - name: Upload backend coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          files: backend/coverage/lcov.info
+          flags: backend
+          name: backend-coverage
+          
+      - name: Store backend test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: backend-test-results
+          path: |
+            backend/coverage/
+            backend/test-results/
+
+  # Job 3: Web Tests
+  web-tests:
+    name: Web Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: |
+          cd web && npm ci
+          cd ../shared && npm ci
+          
+      - name: Build shared package
+        run: cd shared && npm run build
+        
+      - name: Run web unit tests
+        run: cd web && npm test -- --coverage --watchAll=false --testResultsProcessor=jest-sonar-reporter
+        env:
+          CI: true
+          REACT_APP_API_BASE_URL: http://localhost:5000/api
+          
+      - name: Run web component tests
+        run: cd web && npm run test:components
+        env:
+          CI: true
+          
+      - name: Build web application
+        run: cd web && npm run build
+        env:
+          REACT_APP_API_BASE_URL: http://localhost:5000/api
+          REACT_APP_WEBSOCKET_URL: http://localhost:5000
+          
+      - name: Upload web coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          files: web/coverage/lcov.info
+          flags: web
+          name: web-coverage
+          
+      - name: Store web build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: web-build
+          path: web/build/
+          
+      - name: Store web test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: web-test-results
+          path: |
+            web/coverage/
+            web/test-results/
+
+  # Job 4: Mobile Tests
+  mobile-tests:
+    name: Mobile Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: |
+          cd mobile && npm ci
+          cd ../shared && npm ci
+          
+      - name: Build shared package
+        run: cd shared && npm run build
+        
+      - name: Run mobile unit tests
+        run: cd mobile && npm test -- --coverage --watchAll=false --verbose
+        env:
+          NODE_ENV: test
+          
+      - name: Run mobile component tests
+        run: cd mobile && npm run test:components
+        env:
+          NODE_ENV: test
+          
+      - name: Upload mobile coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          files: mobile/coverage/lcov.info
+          flags: mobile
+          name: mobile-coverage
+          
+      - name: Store mobile test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: mobile-test-results
+          path: |
+            mobile/coverage/
+            mobile/test-results/
+
+  # Job 5: Shared Package Tests
+  shared-tests:
+    name: Shared Package Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: cd shared && npm ci
+        
+      - name: Run shared package tests
+        run: cd shared && npm test -- --coverage --watchAll=false
+        
+      - name: Build shared package
+        run: cd shared && npm run build
+        
+      - name: Upload shared coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          files: shared/coverage/lcov.info
+          flags: shared
+          name: shared-coverage
+          
+      - name: Store shared test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: shared-test-results
+          path: |
+            shared/coverage/
+            shared/test-results/
+
+  # Job 6: E2E Tests
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [backend-tests, web-tests]
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_USER: dealerscloud
+          POSTGRES_DB: dealerscloud_e2e
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: |
+          cd backend && npm ci
+          cd ../web && npm ci
+          cd ../shared && npm ci
+          cd ../e2e && npm ci
+          
+      - name: Install Playwright browsers
+        run: cd e2e && npx playwright install --with-deps
+        
+      - name: Build shared package
+        run: cd shared && npm run build
+        
+      - name: Download web build
+        uses: actions/download-artifact@v3
+        with:
+          name: web-build
+          path: web/build/
+          
+      - name: Setup test database
+        run: cd backend && npm run migrate
+        env:
+          DATABASE_URL: postgresql://dealerscloud:password@localhost:5432/dealerscloud_e2e
+          NODE_ENV: test
+          
+      - name: Start backend server
+        run: cd backend && npm start &
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://dealerscloud:password@localhost:5432/dealerscloud_e2e
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-jwt-secret
+          PORT: 5000
+          
+      - name: Start web server
+        run: cd web && npx serve -s build -l 3000 &
+        
+      - name: Wait for servers to be ready
+        run: |
+          npx wait-on http://localhost:5000/api/health
+          npx wait-on http://localhost:3000
+          
+      - name: Run E2E tests
+        run: cd e2e && npm run test
+        env:
+          BASE_URL: http://localhost:3000
+          API_BASE_URL: http://localhost:5000/api
+          
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-test-results
+          path: |
+            e2e/test-results/
+            e2e/playwright-report/
+            
+      - name: Upload E2E screenshots and videos
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: e2e-failures
+          path: |
+            e2e/test-results/
+            e2e/screenshots/
+            e2e/videos/
+
+  # Job 7: Performance Tests
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: [backend-tests, web-tests]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.12.x
+        
+      - name: Download web build
+        uses: actions/download-artifact@v3
+        with:
+          name: web-build
+          path: web/build/
+          
+      - name: Start web server
+        run: cd web && npx serve -s build -l 3000 &
+        
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000
+        
+      - name: Run Lighthouse CI
+        run: lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          
+      - name: Upload Lighthouse results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: lighthouse-results
+          path: .lighthouseci/
+
+  # Job 8: Security Scan
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+          
+      - name: Run npm audit
+        run: |
+          cd backend && npm audit --audit-level=high
+          cd ../web && npm audit --audit-level=high
+          cd ../mobile && npm audit --audit-level=high
+          cd ../shared && npm audit --audit-level=high
+        continue-on-error: true
+        
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          languages: typescript, javascript
+
+  # Job 9: Coverage Report
+  coverage-report:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    needs: [backend-tests, web-tests, mobile-tests, shared-tests]
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download all coverage reports
+        uses: actions/download-artifact@v3
+        
+      - name: Merge coverage reports
+        run: |
+          npx nyc merge backend-test-results/coverage/ .nyc_output/backend.json
+          npx nyc merge web-test-results/coverage/ .nyc_output/web.json
+          npx nyc merge mobile-test-results/coverage/ .nyc_output/mobile.json
+          npx nyc merge shared-test-results/coverage/ .nyc_output/shared.json
+          
+      - name: Generate combined coverage report
+        run: |
+          npx nyc report --reporter=lcov --report-dir=coverage
+          npx nyc report --reporter=text-summary
+          
+      - name: Upload combined coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: coverage/lcov.info
+          name: combined-coverage
+          
+      - name: Comment coverage report
+        uses: romeovs/lcov-reporter-action@v0.3.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          lcov-file: coverage/lcov.info
+          delete-old-comments: true
+
+  # Job 10: Test Summary
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [backend-tests, web-tests, mobile-tests, shared-tests, e2e-tests]
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download all test results
+        uses: actions/download-artifact@v3
+        
+      - name: Generate test summary
+        run: |
+          echo "# Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend Tests: ${{ needs.backend-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Web Tests: ${{ needs.web-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Mobile Tests: ${{ needs.mobile-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Shared Tests: ${{ needs.shared-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- E2E Tests: ${{ needs.e2e-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Coverage Reports" >> $GITHUB_STEP_SUMMARY
+          echo "Coverage reports are available in the artifacts section." >> $GITHUB_STEP_SUMMARY
+          
+      - name: Post test results to Slack
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: 'Test suite failed on ${{ github.ref }}. Check the GitHub Actions for details.'
+          SLACK_TITLE: 'DealersCloud Test Failure'
+          SLACK_COLOR: 'danger'
+
+  # Job 11: Deploy to Staging (if all tests pass)
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [backend-tests, web-tests, mobile-tests, shared-tests, e2e-tests]
+    if: success() && github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Add actual deployment steps here
+        
+      - name: Run smoke tests on staging
+        run: |
+          echo "Running smoke tests on staging..."
+          # Add smoke test commands here
+        
+      - name: Notify deployment success
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: 'Successfully deployed to staging environment.'
+          SLACK_TITLE: 'DealersCloud Staging Deployment'
+          SLACK_COLOR: 'good'

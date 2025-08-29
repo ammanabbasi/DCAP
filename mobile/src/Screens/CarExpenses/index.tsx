@@ -44,7 +44,7 @@ const CarExpenses = ({route}:any) => {
   const params = route?.params;
   const viewShotRef = useRef(null);
   const barCodeRef = useRef(null);
-  const user = useSelector((state: any) => state) => state?.userReducer?.user);
+  const user = useSelector((state: any) => state?.userReducer?.user);
   const {item} = params;
   const today = new Date();
   const dispatch = useDispatch();
@@ -61,12 +61,12 @@ const CarExpenses = ({route}:any) => {
   const {control, handleSubmit, setValue, formState, getValues} = useForm();
   const [isLoading, setIsLoading] = useState<any>(true);
   const [vendersData, setVendersData] = useState<any>([]);
- const [vehicleImagesData, setVehicleImagesData] = useState<any>>({});
+  const [vehicleImagesData, setVehicleImagesData] = useState<any>({});
   const isFocused = useIsFocused();
   const [isPlusClicked, setIsPlusClicked] = useState<any>(false);
   const [expenses, setExpenses] = useState<any>([]);
   const [flattenedExpenses, setFlattenedExpenses] = useState<any>([]);
-  const [selectedItem, setSelectedItem] = useState<any>>({});
+  const [selectedItem, setSelectedItem] = useState<any>({});
   const [page, setPage] = useState<any>(1);
   const [hasMore, setHasMore] = useState<any>(true);
   const [isNewPageLoading, setIsNewPageLoading] = useState<any>(false);
@@ -169,7 +169,7 @@ const CarExpenses = ({route}:any) => {
         console.log('Captured image URI: ', uri);
         saveToGallery(uri);
       })
-      .catch (error: any) => {
+      .catch((error: any) => {
         console.error('Error capturing image: ', error);
       });
   };
@@ -180,12 +180,12 @@ const CarExpenses = ({route}:any) => {
         // console.log('Captured image URI: ', uri);
         saveToGallery(uri);
       })
-      .catch (error: any) => {
+      .catch((error: any) => {
         console.error('Error capturing image: ', error);
       });
   };
 
-  const formatDate = (dateString = today: any): any => {
+  const formatDate = (dateString: any = today): any => {
     const date = new Date(dateString);
     const day = String(date?.getDate()).padStart(2, '0');
     const month = String(date?.getMonth() + 1).padStart(2, '0');
@@ -269,7 +269,7 @@ const CarExpenses = ({route}:any) => {
     setOptionsVisible(false);
     setOptionsVisibleIndex(-1);
     setSelectedItem(prevData => ({
-      ...prevData: any, expense: prevData?.expense?.filter(
+      ...prevData, expense: prevData?.expense?.filter(
         (item, expenseIndex: any) => expenseIndex !== index,
       ),
     }));
@@ -281,7 +281,7 @@ const CarExpenses = ({route}:any) => {
     setOptionsVisible(false);
     setOptionsVisibleIndex(-1);
     setSelectedItem(prevData => ({
-      ...prevData: any, payment: prevData?.payment?.filter(
+      ...prevData, payment: prevData?.payment?.filter(
         (item, paymentIndex: any) => paymentIndex !== index,
       ),
     }));
@@ -504,7 +504,7 @@ const CarExpenses = ({route}:any) => {
       addExpenseTransaction(formData);
     }
   };
-  const getVendersList = async (from = '': any) => {
+  const getVendersList = async (from: any = '') => {
     if (!dropdownHasMore) return;
     try {
       if (from === 'footer') {
@@ -530,7 +530,7 @@ const CarExpenses = ({route}:any) => {
       setIsDropdownPageLoading(false);
     }
   };
-  const getExpenseList = async (from = '': any) => {
+  const getExpenseList = async (from: any = '') => {
     if (!hasMore) return;
     try {
       if (from === 'footer') {
@@ -546,7 +546,7 @@ const CarExpenses = ({route}:any) => {
       if (response?.data?.data?.length < 15) {
         setHasMore(false);
       }
-      const flattenedExpenses = response?.data?.data?.flatMap(({BusinessID: any, expense}: any) =>
+      const flattenedExpenses = response?.data?.data?.flatMap(({BusinessID, expense}: any) =>
           expense?.map(exp => ({
             ...exp,
             BusinessID,
@@ -581,7 +581,7 @@ const CarExpenses = ({route}:any) => {
       if (response?.data?.data?.length < 15) {
         setHasMore(false);
       }
-      const flattenedExpenses = response?.data?.data?.flatMap(({BusinessID: any, expense}: any) =>
+      const flattenedExpenses = response?.data?.data?.flatMap(({BusinessID, expense}: any) =>
           expense?.map(exp => ({
             ...exp,
             BusinessID,
@@ -745,7 +745,7 @@ const CarExpenses = ({route}:any) => {
         <View
           style={[
             styles?.searchContainer,
-            {marginTop: hp(1?.4)},
+            {marginTop: hp(1.4)},
             styles?.negativeIndex,
           ]}>
           <TouchableOpacity style={styles?.repairContainer}>
@@ -759,7 +759,7 @@ const CarExpenses = ({route}:any) => {
       </ScrollView>
     );
   };
-  const renderPaymentItem = ({item: any, index}: any) => {
+  const renderPaymentItem = ({item, index}: any) => {
     return (
       <View style={[styles?.itemContainer]}>
         <View style={styles?.rowSpaceContainer}>
@@ -832,7 +832,7 @@ const CarExpenses = ({route}:any) => {
           Memo:
           <Text style={styles?.descriptionText}> {item?.Memo}</Text>
         </Text>
-        <View style={[styles?.searchContainer, {marginTop: hp(1?.4)}]}>
+        <View style={[styles?.searchContainer, {marginTop: hp(1.4)}]}>
           <TouchableOpacity style={styles?.repairContainer}>
             <Text style={styles?.repairText}>
               {item?.PaymentModeID == 3
@@ -888,7 +888,7 @@ const CarExpenses = ({route}:any) => {
           setPaymentOptionIndex(-1);
         }}
         style={{flex: 1}}>
-      <View style={[styles?.header, {height: isTablet ? hp(45) : hp(33)},{paddingHorizontal:isTablet?wp(3?.5):wp(1)}]}>
+      <View style={[styles?.header, {height: isTablet ? hp(45) : hp(33)},{paddingHorizontal:isTablet?wp(3.5):wp(1)}]}>
         <View style={styles?.subHeader}>
           <Header
             title="Expenses"
@@ -901,7 +901,7 @@ const CarExpenses = ({route}:any) => {
             rightSecondIcn={icn?.qrCode}
             onLeftIconPress={() => navigation?.goBack()}
           />
-          <View style={[styles?.subHeaderContainer,{marginTop:isTablet?hp(-2?.5):hp(2)}]}>
+          <View style={[styles?.subHeaderContainer,{marginTop:isTablet?hp(-2.5):hp(2)}]}>
             <View style={styles?.rowContainer}>
               <Image
                 // source={{uri: item?.vehicleInfo?.imagePath}}
@@ -952,8 +952,8 @@ const CarExpenses = ({route}:any) => {
               <Text style={styles?.priceTxt}>${item?.DisplayPrice?.toFixed(2)} </Text>
             </View>
           </View>
-          <View style={[styles?.carPropsContainer,{marginTop:isTablet?hp(1):hp(-1?.5)},{flexDirection:isTablet?'row':'row'},{justifyContent:isTablet?'space-between':'flex-start'},{flexWrap:isTablet?'nowrap':'wrap'}]}>
-            <View style={[styles?.carPropContainer,{columnGap:isTablet?wp(10):wp(0?.1)}]}>
+          <View style={[styles?.carPropsContainer,{marginTop:isTablet?hp(1):hp(-1.5)},{flexDirection:isTablet?'row':'row'},{justifyContent:isTablet?'space-between':'flex-start'},{flexWrap:isTablet?'nowrap':'wrap'}]}>
+            <View style={[styles?.carPropContainer,{columnGap:isTablet?wp(10):wp(0.1)}]}>
               <Text style={[styles?.carOptionText,{fontSize:isTablet?rfs(22):rfs(16)}] }>
                 Mileage:
                 <Text style={[styles?.carValueText,{fontSize:isTablet?rfs(20):rfs(16)}]}>
@@ -1024,7 +1024,7 @@ const CarExpenses = ({route}:any) => {
                   activeColor={Colors?.dullWhite}
                   flatListProps={{
                     onEndReached: onDropDownEndReached,
-                    onEndReachedThreshold: 0?.7,
+                    onEndReachedThreshold: 0.7,
                   }}
                   showsVerticalScrollIndicator={false}
                   data={vendersData}
@@ -1057,8 +1057,8 @@ const CarExpenses = ({route}:any) => {
                       numberOfCharacter={20}
                       value={value}
                       blueBorder
-                          style={{ height: hp(12?.5) }}
-                          inputStyle={{ padding: 0, fontSize: wp(2?.8) }}
+                          style={{ height: hp(12.5) }}
+                          inputStyle={{ padding: 0, fontSize: wp(2.8) }}
                       onChangeText={onChange}
                           onFocus={() => setIsReferenceFocused(true)}
                           onBlur={() => setIsReferenceFocused(false)}
@@ -1274,7 +1274,7 @@ const CarExpenses = ({route}:any) => {
                     alignItems: formState?.errors?.referenceNo
                       ? undefined
                       : 'center',
-                  },{width:isTablet?wp(20):wp(43)},{padding:isTablet?wp(2):wp(0?.5)}
+                  },{width:isTablet?wp(20):wp(43)},{padding:isTablet?wp(2):wp(0.5)}
                 ]}>
 {/* mobile */}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', columnGap: wp(2) }}>
@@ -1289,7 +1289,7 @@ const CarExpenses = ({route}:any) => {
                       activeColor={Colors?.dullWhite}
                       flatListProps={{
                         onEndReached: onDropDownEndReached,
-                        onEndReachedThreshold: 0?.7,
+                        onEndReachedThreshold: 0.7,
                       }}
                       showsVerticalScrollIndicator={false}
                       data={vendersData}
@@ -1321,8 +1321,8 @@ const CarExpenses = ({route}:any) => {
                           numberOfCharacter={20}
                           value={value}
                           blueBorder
-                          style={{ height: hp(4?.5) }}
-                          inputStyle={{ padding: 0, fontSize: wp(3?.1) }}
+                          style={{ height: hp(4.5) }}
+                          inputStyle={{ padding: 0, fontSize: wp(3.1) }}
                           onChangeText={onChange}
                           onFocus={() => setIsReferenceFocused(true)}
                           onBlur={() => setIsReferenceFocused(false)}
@@ -1522,7 +1522,7 @@ const CarExpenses = ({route}:any) => {
             currentFlatListData?.length > 0
               ? styles?.subContainer
               : styles?.subHeader, {
-              position: 'relative', zIndex: -1, }: any, ]}>
+              position: 'relative', zIndex: -1, } as any, ]}>
           {currentFlatListData?.length > 0 ? (
             <FlatList
               ref={flatListRef}
@@ -1536,7 +1536,7 @@ const CarExpenses = ({route}:any) => {
               keyExtractor={(item, index: any) => index?.toString()}
               ListFooterComponent={!isPlusClicked ? renderFooter : undefined}
               onEndReached={!isPlusClicked ? onEndReached : undefined}
-              onEndReachedThreshold={!isPlusClicked ? 0?.6 : undefined}
+              onEndReachedThreshold={!isPlusClicked ? 0.6 : undefined}
             />
           ) : (
             isTablet ? (
@@ -1612,7 +1612,7 @@ const CarExpenses = ({route}:any) => {
           </TouchableOpacity>
         </View>
       )}
-      <Modal backdropOpacity={0?.5} isVisible={isBarVisible}>
+      <Modal backdropOpacity={0.5} isVisible={isBarVisible}>
         <View style={styles?.modalView}>
           <View style={styles?.modalContainer}>
             <View>
@@ -1628,7 +1628,7 @@ const CarExpenses = ({route}:any) => {
               </View>
               <ViewShot
                 ref={barCodeRef}
-                options={{format: 'png', quality: 1?.0}}
+                options={{format: 'png', quality: 1.0}}
                 style={{alignSelf: 'center', marginVertical: hp(2)}}>
                 <Barcode
                   value={item?.vehicleInfo?.VIN}
@@ -1646,7 +1646,7 @@ const CarExpenses = ({route}:any) => {
           </View>
         </View>
       </Modal>
-      <Modal backdropOpacity={0?.5} isVisible={isQrVisible}>
+      <Modal backdropOpacity={0.5} isVisible={isQrVisible}>
         <View style={styles?.modalView}>
           <View style={styles?.modalContainer}>
             <View>
@@ -1662,7 +1662,7 @@ const CarExpenses = ({route}:any) => {
               </View>
               <ViewShot
                 ref={viewShotRef}
-                options={{format: 'png', quality: 1?.0}}
+                options={{format: 'png', quality: 1.0}}
                 style={{alignSelf: 'center', marginVertical: hp(2)}}>
                 <QRCode
                   value={item?.vehicleInfo?.VIN}
@@ -1680,7 +1680,7 @@ const CarExpenses = ({route}:any) => {
           </View>
         </View>
       </Modal>
-      <Modal backdropOpacity={0?.5} isVisible={isMemoVisible}>
+      <Modal backdropOpacity={0.5} isVisible={isMemoVisible}>
         <View style={styles?.modalView}>
           <View style={styles?.modalContainer}>
             <View>

@@ -1,0 +1,310 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+  JAVA_VERSION: '17'
+
+jobs:
+  # Code Quality Checks
+  quality-check:
+    runs-on: ubuntu-latest
+    name: Code Quality
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+      
+      - name: Run ESLint
+        run: npm run lint --workspaces --if-present
+      
+      - name: Run Prettier Check
+        run: npm run format:check
+      
+      - name: TypeScript Check
+        run: |
+          npx tsc --noEmit -p backend
+          npx tsc --noEmit -p web
+          npx tsc --noEmit -p mobile
+          npx tsc --noEmit -p shared
+
+  # Backend Tests & Build
+  backend:
+    runs-on: ubuntu-latest
+    name: Backend Build & Test
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          npm ci --legacy-peer-deps
+          cd backend && npm ci --legacy-peer-deps
+      
+      - name: Build Backend
+        run: cd backend && npm run build
+      
+      - name: Run Backend Tests
+        run: cd backend && npm test
+        env:
+          NODE_ENV: test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-jwt-secret-for-ci
+          JWT_REFRESH_SECRET: test-refresh-secret-for-ci
+          SESSION_SECRET: test-session-secret-for-ci
+          ENCRYPTION_KEY: test-encryption-key-32-chars---
+          ENCRYPTION_IV: test-encrypt-iv-
+      
+      - name: Upload Backend Build
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-dist
+          path: backend/dist
+          retention-days: 7
+
+  # Web Dashboard Build
+  web:
+    runs-on: ubuntu-latest
+    name: Web Build & Test
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          npm ci --legacy-peer-deps
+          cd web && npm ci --legacy-peer-deps
+      
+      - name: Run Web Tests
+        run: cd web && npm test -- --watchAll=false --coverage
+        env:
+          CI: true
+      
+      - name: Build Web App
+        run: cd web && npm run build
+        env:
+          CI: true
+          GENERATE_SOURCEMAP: false
+      
+      - name: Upload Web Build
+        uses: actions/upload-artifact@v3
+        with:
+          name: web-build
+          path: web/build
+          retention-days: 7
+      
+      - name: Upload Coverage Reports
+        uses: codecov/codecov-action@v3
+        with:
+          directory: web/coverage
+          flags: web
+          name: web-coverage
+
+  # Mobile App Build
+  mobile-android:
+    runs-on: ubuntu-latest
+    name: Mobile Android Build
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'gradle'
+      
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      
+      - name: Install dependencies
+        run: |
+          npm ci --legacy-peer-deps
+          cd mobile && npm ci --legacy-peer-deps
+      
+      - name: Run Mobile Tests
+        run: cd mobile && npm test -- --watchAll=false
+        env:
+          CI: true
+      
+      - name: Build Android APK
+        run: |
+          cd mobile/android
+          chmod +x gradlew
+          ./gradlew clean assembleDebug --no-daemon
+        env:
+          JAVA_OPTS: -Xmx4g
+      
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-debug-apk
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+  # E2E Tests
+  e2e-tests:
+    runs-on: ubuntu-latest
+    name: E2E Tests
+    needs: [backend, web]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Download Backend Build
+        uses: actions/download-artifact@v3
+        with:
+          name: backend-dist
+          path: backend/dist
+      
+      - name: Download Web Build
+        uses: actions/download-artifact@v3
+        with:
+          name: web-build
+          path: web/build
+      
+      - name: Install dependencies
+        run: |
+          npm ci --legacy-peer-deps
+          cd e2e && npm ci
+          npx playwright install --with-deps chromium
+      
+      - name: Start Backend Server
+        run: |
+          cd backend
+          node dist/server.js &
+          sleep 10
+        env:
+          NODE_ENV: test
+          PORT: 5000
+          JWT_SECRET: test-jwt-secret
+          DB_SERVER: localhost
+          DB_NAME: test
+      
+      - name: Run E2E Tests
+        run: cd e2e && npm run test:critical
+        env:
+          BASE_URL: http://localhost:5000
+          CI: true
+      
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-results
+          path: e2e/test-results
+          retention-days: 7
+
+  # Deploy to Azure (Production)
+  deploy-production:
+    runs-on: ubuntu-latest
+    name: Deploy to Production
+    needs: [quality-check, backend, web, mobile-android, e2e-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://dealerscloud.com
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download Backend Build
+        uses: actions/download-artifact@v3
+        with:
+          name: backend-dist
+          path: backend/dist
+      
+      - name: Download Web Build
+        uses: actions/download-artifact@v3
+        with:
+          name: web-build
+          path: web/build
+      
+      - name: Deploy Backend to Azure App Service
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: dealerscloud-api
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_BACKEND }}
+          package: backend
+      
+      - name: Deploy Web to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "web/build"
+          skip_app_build: true
+      
+      - name: Run Database Migrations
+        run: |
+          cd backend
+          npm run migrate
+        env:
+          DB_SERVER: ${{ secrets.PROD_DB_SERVER }}
+          DB_NAME: ${{ secrets.PROD_DB_NAME }}
+          DB_USER: ${{ secrets.PROD_DB_USER }}
+          DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
+
+  # Notification
+  notify:
+    runs-on: ubuntu-latest
+    name: Send Notifications
+    needs: [deploy-production]
+    if: always()
+    steps:
+      - name: Send Slack Notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Deployment Status: ${{ job.status }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()

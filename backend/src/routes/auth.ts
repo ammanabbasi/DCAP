@@ -1,79 +1,103 @@
-import express from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { body, validationResult } from 'express-validator';
+import express, { Request, Response, NextFunction } from 'express';
+import rateLimit from 'express-rate-limit';
+import { AuthService } from '../services/AuthService';
+import { authValidation } from '../middleware/validation';
 import { authMiddleware } from '../middleware/auth';
 import logger from '../utils/logger';
 
 const router = express.Router();
+const authService = new AuthService();
+
+// Rate limiters for sensitive endpoints
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts per window
+  message: 'Too many login attempts. Please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req: Request, res: Response) => {
+    logger.warn(`Rate limit exceeded for login from IP: ${req.ip}`);
+    res.status(429).json({
+      success: false,
+      message: 'Too many login attempts. Please try again in 15 minutes.'
+    });
+  }
+});
+
+const passwordResetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // 3 attempts per hour
+  message: 'Too many password reset requests. Please try again later.',
+  handler: (req: Request, res: Response) => {
+    logger.warn(`Rate limit exceeded for password reset from IP: ${req.ip}`);
+    res.status(429).json({
+      success: false,
+      message: 'Too many password reset requests. Please try again later.'
+    });
+  }
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // 5 registrations per hour
+  message: 'Too many registration attempts. Please try again later.',
+  handler: (req: Request, res: Response) => {
+    logger.warn(`Rate limit exceeded for registration from IP: ${req.ip}`);
+    res.status(429).json({
+      success: false,
+      message: 'Too many registration attempts. Please try again later.'
+    });
+  }
+});
 
 // @route   POST /api/auth/register
 // @desc    Register a new user
 // @access  Public
-router.post('/register', [
-  body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 6 }),
-  body('firstName').notEmpty().trim(),
-  body('lastName').notEmpty().trim(),
-  body('dealershipName').notEmpty().trim()
-], async (req, res) => {
+router.post('/register', registerLimiter, authValidation.register, async (req: Request, res: Response) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation errors',
-        errors: errors.array()
-      });
-    }
+    const { email, password, firstName, lastName, dealershipName, phone, role } = req.body;
 
-    const { email, password, firstName, lastName, dealershipName, phone, role = 'salesperson' } = req.body;
+    const user = await authService.register({
+      email,
+      password,
+      first_name: firstName,
+      last_name: lastName,
+      phone,
+      role: role || 'customer',
+      // Note: dealership_id should be handled separately in production
+    });
 
-    // Check if user already exists
-    // TODO: Implement database check
-    
-    // Hash password
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-    // Create user in database
-    // TODO: Implement database insertion
-
-    const token = jwt.sign(
-      { 
-        userId: 'temp-user-id',
-        email,
-        role 
-      },
-      process.env.JWT_SECRET || 'fallback-secret',
-      { expiresIn: '24h' }
-    );
-
-    logger.info(`User registered: ${email}`);
+    logger.info(`User registered successfully: ${email}`);
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: 'Registration successful. Please check your email to verify your account.',
       data: {
-        token,
         user: {
-          id: 'temp-user-id',
-          email,
-          firstName,
-          lastName,
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
           dealershipName,
-          phone,
-          role,
-          createdAt: new Date().toISOString()
+          role: user.role,
+          createdAt: user.created_at
         }
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Registration error:', error);
+    
+    if (error.message.includes('already exists')) {
+      return res.status(409).json({
+        success: false,
+        message: 'User with this email already exists'
+      });
+    }
+
     res.status(500).json({
       success: false,
-      message: 'Internal server error during registration'
+      message: 'Registration failed. Please try again.'
     });
   }
 });
@@ -81,94 +105,69 @@ router.post('/register', [
 // @route   POST /api/auth/login
 // @desc    Login user
 // @access  Public
-router.post('/login', [
-  body('email').isEmail().normalizeEmail(),
-  body('password').notEmpty()
-], async (req, res) => {
+router.post('/login', loginLimiter, authValidation.login, async (req: Request, res: Response) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid email or password format',
-        errors: errors.array()
-      });
-    }
-
     const { email, password } = req.body;
 
-    // TODO: Get user from database
-    // For now, using mock data
-    const mockUser = {
-      id: 'user-123',
-      email: 'demo@dealerscloud.com',
-      password: await bcrypt.hash('demo123', 12), // demo123
-      firstName: 'Demo',
-      lastName: 'User',
-      dealershipName: 'Demo Dealership',
-      role: 'manager',
-      isActive: true
+    // Get device info from request
+    const deviceInfo = {
+      ip_address: req.ip,
+      user_agent: req.get('user-agent'),
+      device_type: req.get('x-device-type'), // Custom header from mobile app
+      device_id: req.get('x-device-id') // Custom header for device identification
     };
 
-    // Validate password
-    const isValidPassword = await bcrypt.compare(password, mockUser.password);
-    
-    if (email !== mockUser.email || !isValidPassword) {
+    const result = await authService.login(email, password, deviceInfo);
+
+    logger.info(`User logged in successfully: ${email}`);
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        token: result.accessToken,
+        refreshToken: result.refreshToken,
+        expiresIn: result.expiresIn,
+        user: {
+          id: result.user.id,
+          email: result.user.email,
+          firstName: result.user.first_name,
+          lastName: result.user.last_name,
+          role: result.user.role,
+          dealershipId: result.user.dealership_id,
+          isVerified: result.user.is_verified,
+          lastLogin: result.user.last_login
+        }
+      }
+    });
+
+  } catch (error: any) {
+    logger.error('Login error:', error);
+
+    if (error.message.includes('Invalid email or password')) {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
       });
     }
 
-    if (!mockUser.isActive) {
-      return res.status(403).json({
+    if (error.message.includes('locked')) {
+      return res.status(423).json({
         success: false,
-        message: 'Account is inactive. Please contact administrator.'
+        message: 'Account is locked due to multiple failed attempts. Please try again later.'
       });
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { 
-        userId: mockUser.id,
-        email: mockUser.email,
-        role: mockUser.role 
-      },
-      process.env.JWT_SECRET || 'fallback-secret',
-      { expiresIn: '24h' }
-    );
+    if (error.message.includes('deactivated')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Account is deactivated. Please contact support.'
+      });
+    }
 
-    // Generate refresh token
-    const refreshToken = jwt.sign(
-      { userId: mockUser.id },
-      process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret',
-      { expiresIn: '7d' }
-    );
-
-    logger.info(`User logged in: ${email}`);
-
-    res.json({
-      success: true,
-      message: 'Login successful',
-      data: {
-        token,
-        refreshToken,
-        user: {
-          id: mockUser.id,
-          email: mockUser.email,
-          firstName: mockUser.firstName,
-          lastName: mockUser.lastName,
-          dealershipName: mockUser.dealershipName,
-          role: mockUser.role
-        }
-      }
-    });
-
-  } catch (error) {
-    logger.error('Login error:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error during login'
+      message: 'Login failed. Please try again.'
     });
   }
 });
@@ -176,7 +175,7 @@ router.post('/login', [
 // @route   POST /api/auth/refresh
 // @desc    Refresh JWT token
 // @access  Public
-router.post('/refresh', async (req, res) => {
+router.post('/refresh', async (req: Request, res: Response) => {
   try {
     const { refreshToken } = req.body;
 
@@ -187,36 +186,89 @@ router.post('/refresh', async (req, res) => {
       });
     }
 
-    const decoded = jwt.verify(
-      refreshToken, 
-      process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret'
-    ) as any;
+    const deviceInfo = {
+      ip_address: req.ip,
+      user_agent: req.get('user-agent')
+    };
 
-    // TODO: Check if refresh token exists in database and is valid
-
-    // Generate new access token
-    const newToken = jwt.sign(
-      { 
-        userId: decoded.userId,
-        email: 'demo@dealerscloud.com', // TODO: Get from database
-        role: 'manager' // TODO: Get from database
-      },
-      process.env.JWT_SECRET || 'fallback-secret',
-      { expiresIn: '24h' }
-    );
+    const result = await authService.refreshAccessToken(refreshToken, deviceInfo);
 
     res.json({
       success: true,
+      message: 'Token refreshed successfully',
       data: {
-        token: newToken
+        token: result.accessToken,
+        expiresIn: result.expiresIn
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Token refresh error:', error);
-    res.status(401).json({
+
+    if (error.message.includes('Invalid') || error.message.includes('expired')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired refresh token'
+      });
+    }
+
+    res.status(500).json({
       success: false,
-      message: 'Invalid refresh token'
+      message: 'Failed to refresh token'
+    });
+  }
+});
+
+// @route   POST /api/auth/logout
+// @desc    Logout user (invalidate refresh token)
+// @access  Private
+router.post('/logout', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { refreshToken } = req.body;
+    const user = (req as any).user;
+
+    if (refreshToken) {
+      await authService.logout(refreshToken);
+    }
+
+    logger.info(`User logged out: ${user.email}`);
+
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+
+  } catch (error) {
+    logger.error('Logout error:', error);
+    // Even if logout fails, return success to clear client state
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  }
+});
+
+// @route   POST /api/auth/logout-all
+// @desc    Logout from all devices
+// @access  Private
+router.post('/logout-all', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+
+    await authService.logoutAllDevices(user.userId);
+
+    logger.info(`User logged out from all devices: ${user.email}`);
+
+    res.json({
+      success: true,
+      message: 'Logged out from all devices successfully'
+    });
+
+  } catch (error) {
+    logger.error('Logout all devices error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to logout from all devices'
     });
   }
 });
@@ -224,22 +276,12 @@ router.post('/refresh', async (req, res) => {
 // @route   POST /api/auth/forgot-password
 // @desc    Request password reset
 // @access  Public
-router.post('/forgot-password', [
-  body('email').isEmail().normalizeEmail()
-], async (req, res) => {
+router.post('/forgot-password', passwordResetLimiter, authValidation.forgotPassword, async (req: Request, res: Response) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Valid email required',
-        errors: errors.array()
-      });
-    }
-
     const { email } = req.body;
 
-    // TODO: Generate password reset token and send email
+    await authService.requestPasswordReset(email);
+
     logger.info(`Password reset requested for: ${email}`);
 
     // Always return success for security (don't reveal if email exists)
@@ -250,9 +292,119 @@ router.post('/forgot-password', [
 
   } catch (error) {
     logger.error('Forgot password error:', error);
+    // Still return success to prevent email enumeration
+    res.json({
+      success: true,
+      message: 'If an account with this email exists, a password reset link has been sent.'
+    });
+  }
+});
+
+// @route   POST /api/auth/reset-password
+// @desc    Reset password with token
+// @access  Public
+router.post('/reset-password', authValidation.resetPassword, async (req: Request, res: Response) => {
+  try {
+    const { token, password } = req.body;
+
+    const success = await authService.resetPassword(token, password);
+
+    if (success) {
+      logger.info('Password reset successful');
+      res.json({
+        success: true,
+        message: 'Password reset successful. You can now login with your new password.'
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: 'Failed to reset password. Token may be invalid or expired.'
+      });
+    }
+
+  } catch (error: any) {
+    logger.error('Reset password error:', error);
+    
+    if (error.message.includes('Invalid') || error.message.includes('expired')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired reset token'
+      });
+    }
+
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Failed to reset password'
+    });
+  }
+});
+
+// @route   POST /api/auth/change-password
+// @desc    Change password for logged in user
+// @access  Private
+router.post('/change-password', authMiddleware, authValidation.changePassword, async (req: Request, res: Response) => {
+  try {
+    const { currentPassword, password: newPassword } = req.body;
+    const user = (req as any).user;
+
+    const success = await authService.changePassword(user.userId, currentPassword, newPassword);
+
+    if (success) {
+      logger.info(`Password changed for user: ${user.email}`);
+      res.json({
+        success: true,
+        message: 'Password changed successfully'
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: 'Failed to change password'
+      });
+    }
+
+  } catch (error: any) {
+    logger.error('Change password error:', error);
+    
+    if (error.message.includes('incorrect')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to change password'
+    });
+  }
+});
+
+// @route   POST /api/auth/verify-email
+// @desc    Verify email with token
+// @access  Public
+router.post('/verify-email/:token', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+
+    const success = await authService.verifyEmail(token);
+
+    if (success) {
+      res.json({
+        success: true,
+        message: 'Email verified successfully. You can now login.'
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification token'
+      });
+    }
+
+  } catch (error) {
+    logger.error('Email verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify email'
     });
   }
 });
@@ -260,22 +412,22 @@ router.post('/forgot-password', [
 // @route   GET /api/auth/profile
 // @desc    Get current user profile
 // @access  Private
-router.get('/profile', authMiddleware, async (req, res) => {
+router.get('/profile', authMiddleware, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
 
-    // TODO: Get full user profile from database
+    // The user object from authMiddleware contains basic info from token
+    // You might want to fetch complete user data from database here
+    
     res.json({
       success: true,
       data: {
         user: {
           id: user.userId,
           email: user.email,
-          firstName: 'Demo',
-          lastName: 'User',
-          dealershipName: 'Demo Dealership',
           role: user.role,
-          lastLogin: new Date().toISOString()
+          dealershipId: user.dealershipId,
+          // Additional fields can be fetched from database if needed
         }
       }
     });
@@ -289,28 +441,22 @@ router.get('/profile', authMiddleware, async (req, res) => {
   }
 });
 
-// @route   POST /api/auth/logout
-// @desc    Logout user (invalidate token)
+// @route   GET /api/auth/verify-token
+// @desc    Verify if a token is valid
 // @access  Private
-router.post('/logout', authMiddleware, async (req, res) => {
-  try {
-    const user = (req as any).user;
-
-    // TODO: Add token to blacklist in database
-    logger.info(`User logged out: ${user.email}`);
-
-    res.json({
-      success: true,
-      message: 'Logged out successfully'
-    });
-
-  } catch (error) {
-    logger.error('Logout error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error during logout'
-    });
-  }
+router.get('/verify-token', authMiddleware, (req: Request, res: Response) => {
+  // If the request reaches here, the token is valid (validated by authMiddleware)
+  const user = (req as any).user;
+  
+  res.json({
+    success: true,
+    message: 'Token is valid',
+    data: {
+      userId: user.userId,
+      email: user.email,
+      role: user.role
+    }
+  });
 });
 
 export default router;

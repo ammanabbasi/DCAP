@@ -259,7 +259,7 @@ const ChatDetails = (): any => {
     };
   }, [socket, userId]);
 
-  const onSend = (newMessages = []: any): any => {
+  const onSend = (newMessages: any = []): any => {
     if (text.trim() && socket) {
       const message = {
         senderId: userId,

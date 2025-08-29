@@ -16,13 +16,13 @@ interface LoadingModalProps {
   message?: string;
 }
 
-const LoadingModal: React.FC<LoadingModalProps> = ({visible: any, message}: any) => {
+const LoadingModal: React.FC<LoadingModalProps> = ({visible, message}) => {
   return (
     <Modal transparent={true} visible={visible} animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.alertContainer}>
           <ActivityIndicator
-            size={Platform.OS === 'ios' ? 'large' : 40}
+            size="large"
             color={Colors.black}
           />
           <Text style={styles.okButtonText}>

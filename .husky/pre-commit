@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run lint-staged to check staged files
+npx lint-staged
+
+# Run a quick validation to ensure everything still works
+npm run validate:quick

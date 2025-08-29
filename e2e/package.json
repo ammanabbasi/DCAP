@@ -1,0 +1,27 @@
+{
+  "name": "@dealerscloud/e2e-tests",
+  "version": "1.0.0",
+  "description": "End-to-end tests for DealersCloud platform",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:debug": "playwright test --debug",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report",
+    "test:mobile": "playwright test --grep @mobile",
+    "test:web": "playwright test --grep @web",
+    "test:critical": "playwright test --grep @critical",
+    "test:smoke": "playwright test --grep @smoke",
+    "install:browsers": "playwright install",
+    "install:deps": "playwright install-deps"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.2",
+    "@types/node": "^22.10.1",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

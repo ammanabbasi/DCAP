@@ -261,7 +261,7 @@ const EditProfile = (): any => {
           }}
           innerIconStyle={{
             borderRadius: wp(1),
-            borderWidth: wp(0?.4),
+            borderWidth: wp(0.4),
             borderColor: Colors?.primary,
             backgroundColor: isChecked ? Colors?.primary : 'transparent',
           }}
@@ -291,7 +291,7 @@ const EditProfile = (): any => {
           }}
           innerIconStyle={{
             borderRadius: wp(1),
-            borderWidth: wp(0?.4),
+            borderWidth: wp(0.4),
             borderColor: Colors?.primary,
             backgroundColor: isEmail ? Colors?.primary : 'transparent',
           }}
@@ -308,7 +308,7 @@ const EditProfile = (): any => {
           }}
           innerIconStyle={{
             borderRadius: wp(1),
-            borderWidth: wp(0?.4),
+            borderWidth: wp(0.4),
             borderColor: Colors?.primary,
             backgroundColor: isMessage ? Colors?.primary : 'transparent',
           }}
@@ -325,7 +325,7 @@ const EditProfile = (): any => {
           }}
           innerIconStyle={{
             borderRadius: wp(1),
-            borderWidth: wp(0?.4),
+            borderWidth: wp(0.4),
             borderColor: Colors?.primary,
             backgroundColor: isCRM ? Colors?.primary : 'transparent',
           }}
@@ -342,7 +342,7 @@ const EditProfile = (): any => {
           }}
           innerIconStyle={{
             borderRadius: wp(1),
-            borderWidth: wp(0?.4),
+            borderWidth: wp(0.4),
             borderColor: Colors?.primary,
             backgroundColor: isLead ? Colors?.primary : 'transparent',
           }}

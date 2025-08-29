@@ -291,7 +291,7 @@ const Dashboard = (): any => {
   }, []);
   useEffect(() => {
     if (isFocused && isModalVisible) {
-      setTimeout((: any) => {
+      setTimeout(() => {
         setModalVisible(false);
       }, 2000);
     }
@@ -301,7 +301,7 @@ const Dashboard = (): any => {
     : 0;
 
   // Add some headroom (e?.g., 10% more)
-  const chartMaxValue = Math.ceil(maxRevenue * 1?.1 / 1000) * 1000;
+  const chartMaxValue = Math.ceil(maxRevenue * 1.1 / 1000) * 1000;
   return (<View style={styles?.mainView}>
       <Header
         title="Dashboard"

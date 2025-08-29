@@ -185,12 +185,12 @@ const Crm: React.FC<Props> = ({ navigation: any, route }: any) => {
 
   const cleanObject = obj =>
     Object.fromEntries(
-      Object.entries(obj).filter(([_: any, value]: any) =>
+      Object.entries(obj).filter(([_, value]: any) =>
           value !== undefined && value !== null && value !== false,
       ),
     );
 
-  const getCrmData = async (from = '': any) => {
+  const getCrmData = async (from: any = '') => {
     try {
       const currentPage = pageRef?.current[selectedFilter] || 1;
       const hasMore = pageStorageRef?.current[selectedFilter]?.hasMore ?? true;
@@ -386,7 +386,7 @@ const Crm: React.FC<Props> = ({ navigation: any, route }: any) => {
   }, []);
 
   // Refresh data when screen comes back into focus
-  useFocusEffect(useCallback((: any) => {
+  useFocusEffect(useCallback(() => {
       // Refresh data when returning from other screens
       if (isFocused) {
         onRefresh();
@@ -394,11 +394,11 @@ const Crm: React.FC<Props> = ({ navigation: any, route }: any) => {
     }, [isFocused])
   );
 
-  const renderItem = ({ item: any, index }: any) => {
+  const renderItem = ({ item, index }: any) => {
     return (<View style={[styles?.itemContainer]}>
         <View style={styles?.rowSpaceContainer}>
           <TouchableOpacity
-            onPress={() => navigation?.navigate('CrmProfile': any, {
+            onPress={() => navigation?.navigate('CrmProfile', {
               item: item, onProfileUpdated: () => {
                 // Refresh the current data when profile is updated
                 onRefresh();
@@ -407,7 +407,7 @@ const Crm: React.FC<Props> = ({ navigation: any, route }: any) => {
             <Text style={styles?.itemName}>{item?.customerName}</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => navigation?.navigate('CrmProfile': any, {
+            onPress={() => navigation?.navigate('CrmProfile', {
               item: item, onProfileUpdated: () => {
                 // Refresh the current data when profile is updated
                 onRefresh();
@@ -696,7 +696,7 @@ const Crm: React.FC<Props> = ({ navigation: any, route }: any) => {
         <FlatList
           data={screenFilter}
           renderItem={renderFilters}
-          style={{ marginTop: hp(3), maxHeight: hp(4?.5) }}
+          style={{ marginTop: hp(3), maxHeight: hp(4.5) }}
           horizontal
           showsHorizontalScrollIndicator={false}
         />
@@ -731,7 +731,7 @@ const Crm: React.FC<Props> = ({ navigation: any, route }: any) => {
               initialNumToRender={10}
               onEndReached={onEndReached}
               ListFooterComponent={renderFooter}
-              onEndReachedThreshold={0?.7}
+              onEndReachedThreshold={0.7}
               keyExtractor={(item: any, index: any) => index?.toString()}
               showsVerticalScrollIndicator={false}
               renderItem={renderItem}
@@ -792,7 +792,7 @@ const Crm: React.FC<Props> = ({ navigation: any, route }: any) => {
           </View>
         )}
       </View>
-      <Modal backdropOpacity={0?.5} isVisible={isModalVisible}>
+      <Modal backdropOpacity={0.5} isVisible={isModalVisible}>
         <View style={styles?.modalView}>
           <View style={styles?.modalContainer}>
             <TouchableOpacity
@@ -833,7 +833,7 @@ const Crm: React.FC<Props> = ({ navigation: any, route }: any) => {
             {...(props || {})}
             appearsOnIndex={0}
             disappearsOnIndex={-1}
-            opacity={0?.3}
+            opacity={0.3}
           />
         )}
         backgroundStyle={{
@@ -1104,7 +1104,7 @@ const Crm: React.FC<Props> = ({ navigation: any, route }: any) => {
                   labelField="description"
                   valueField="leadTypeId"
                   style={styles?.filterDropDownContainer}
-                  setValue={(: any) => { }}
+                  setValue={() => { }}
                   onChange={item => {
                     updateFilterData('leadTypeID', item?.leadTypeId);
                   }}
@@ -1171,8 +1171,8 @@ const Crm: React.FC<Props> = ({ navigation: any, route }: any) => {
                         : `${secondFilterData?.[selectedFilter]?.date || 'Date'
                         }`
                     }
-                    style={{ paddingVertical: hp(0?.4) }}
-                    onChangeText={() = numberOfCharacter={50}> { }}
+                    style={{ paddingVertical: hp(0.4) }}
+                    onChangeText={() => { }}
                     blueBorder
                     numberOfCharacter={150}
                     rightIcon={icn?.calender}
@@ -1186,7 +1186,7 @@ const Crm: React.FC<Props> = ({ navigation: any, route }: any) => {
                     labelField="description"
                     valueField="assignedToId"
                     value={secondFilterData?.selectedFilter?.assignedToID}
-                    setValue={(: any) => { }}
+                    setValue={() => { }}
                     onChange={item => {
                       updateFilterData('assignedToID', item?.assignedToId);
                     }}
@@ -1203,7 +1203,7 @@ const Crm: React.FC<Props> = ({ navigation: any, route }: any) => {
                     labelField="label"
                     valueField="value"
                     value={secondFilterData?.selectedFilter?.replyByID}
-                    setValue={(: any) => { }}
+                    setValue={() => { }}
                     onChange={item => {
                       updateFilterData('replyByID', item?.value);
                     }}
@@ -1247,7 +1247,7 @@ const Crm: React.FC<Props> = ({ navigation: any, route }: any) => {
               updateFilterData('startDate', dateOnly);
               updateFilterData('endDate', undefined);
               setOpen(false);
-              setTimeout((: any) => setOpen(true), 300);
+              setTimeout(() => setOpen(true), 300);
             } else {
               updateFilterData('endDate', dateOnly);
               setOpen(false);

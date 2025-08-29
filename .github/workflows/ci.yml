@@ -5,69 +5,105 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
 
 env:
-  NODE_VERSION: '18'
+  NODE_OPTIONS: '--max-old-space-size=4096'
 
 jobs:
-  # Lint and Type Check
-  lint:
-    name: Lint & Type Check
+  changes:
+    name: Detect Changes
     runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+      web: ${{ steps.changes.outputs.web }}
+      mobile: ${{ steps.changes.outputs.mobile }}
+      shared: ${{ steps.changes.outputs.shared }}
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - 'shared/**'
+            web:
+              - 'web/**'
+              - 'shared/**'
+            mobile:
+              - 'mobile/**'
+              - 'shared/**'
+            shared:
+              - 'shared/**'
+              - 'package.json'
+              - '.eslintrc.js'
+              - '.prettierrc.js'
+
+  lint-and-typecheck:
+    name: Lint & TypeCheck
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.mobile == 'true' || needs.changes.outputs.shared == 'true' }}
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: |
-            backend/package-lock.json
-            frontend/package-lock.json
-      
-      - name: Install Backend Dependencies
-        working-directory: ./backend
-        run: npm ci
-      
-      - name: Lint Backend
-        working-directory: ./backend
-        run: npm run lint
-      
-      - name: Type Check Backend
-        working-directory: ./backend
-        run: npm run type-check
-      
-      - name: Install Frontend Dependencies
-        working-directory: ./frontend
-        run: npm ci
-      
-      - name: Lint Frontend
-        working-directory: ./frontend
-        run: npm run lint
-      
-      - name: Type Check Frontend
-        working-directory: ./frontend
-        run: npm run type-check
 
-  # Test Backend
-  test-backend:
-    name: Test Backend
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm run install:all
+
+      - name: Lint shared package
+        if: needs.changes.outputs.shared == 'true'
+        run: npm run lint:shared
+
+      - name: TypeCheck shared package
+        if: needs.changes.outputs.shared == 'true'
+        run: npm run typecheck:shared
+
+      - name: Lint backend
+        if: needs.changes.outputs.backend == 'true'
+        run: npm run lint:backend
+
+      - name: TypeCheck backend
+        if: needs.changes.outputs.backend == 'true'
+        run: npm run typecheck:backend
+
+      - name: Lint web
+        if: needs.changes.outputs.web == 'true'
+        run: npm run lint:web
+
+      - name: TypeCheck web
+        if: needs.changes.outputs.web == 'true'
+        run: npm run typecheck:web
+
+      - name: Lint mobile
+        if: needs.changes.outputs.mobile == 'true'
+        run: npm run lint:mobile
+
+      - name: TypeCheck mobile
+        if: needs.changes.outputs.mobile == 'true'
+        run: npm run typecheck:mobile
+
+  test:
+    name: Test
     runs-on: ubuntu-latest
+    needs: [changes, lint-and-typecheck]
+    if: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.mobile == 'true' || needs.changes.outputs.shared == 'true' }}
+    strategy:
+      matrix:
+        node-version: [18, 20]
     services:
-      mssql:
-        image: mcr.microsoft.com/mssql/server:2022-latest
-        env:
-          ACCEPT_EULA: Y
-          SA_PASSWORD: TestPass@123
-        ports:
-          - 1433:1433
-        options: >-
-          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P TestPass@123 -Q 'SELECT 1'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      
       redis:
         image: redis:7-alpine
         ports:
@@ -77,135 +113,245 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-      
-      - name: Install Dependencies
-        working-directory: ./backend
-        run: npm ci
-      
-      - name: Run Tests
-        working-directory: ./backend
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm run install:all
+
+      - name: Test shared package
+        if: needs.changes.outputs.shared == 'true'
+        run: npm run test:shared
+
+      - name: Test backend
+        if: needs.changes.outputs.backend == 'true'
+        run: npm run test:backend
         env:
-          NODE_ENV: test
-          DB_HOST: localhost
-          DB_PASSWORD: TestPass@123
-          REDIS_HOST: localhost
-          JWT_SECRET: test-secret
-        run: npm test -- --coverage
-      
-      - name: Upload Coverage
-        uses: codecov/codecov-action@v4
-        with:
-          directory: ./backend/coverage
-          flags: backend
-          name: backend-coverage
+          REDIS_URL: redis://localhost:6379
 
-  # Test Frontend
-  test-frontend:
-    name: Test Frontend
+      - name: Test web
+        if: needs.changes.outputs.web == 'true'
+        run: npm run test:web
+
+      - name: Test mobile
+        if: needs.changes.outputs.mobile == 'true'
+        run: npm run test:mobile
+
+  coverage:
+    name: Coverage Report
     runs-on: ubuntu-latest
+    needs: [changes, test]
+    if: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.shared == 'true' }}
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: 20
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-      
-      - name: Install Dependencies
-        working-directory: ./frontend
-        run: npm ci
-      
-      - name: Run Tests
-        working-directory: ./frontend
-        run: npm test -- --coverage
-      
-      - name: Upload Coverage
-        uses: codecov/codecov-action@v4
-        with:
-          directory: ./frontend/coverage
-          flags: frontend
-          name: frontend-coverage
 
-  # Build Docker Images
-  build-docker:
-    name: Build Docker Images
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm run install:all
+
+      - name: Generate coverage reports
+        run: |
+          if [ "${{ needs.changes.outputs.shared }}" == "true" ]; then
+            npm run test:shared:coverage
+          fi
+          if [ "${{ needs.changes.outputs.backend }}" == "true" ]; then
+            npm run test:backend:coverage
+          fi
+          if [ "${{ needs.changes.outputs.web }}" == "true" ]; then
+            npm run test:web:coverage
+          fi
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          fail_ci_if_error: true
+
+  build:
+    name: Build
     runs-on: ubuntu-latest
-    needs: [lint, test-backend, test-frontend]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-    
+    needs: [changes, lint-and-typecheck]
+    if: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.shared == 'true' }}
+    strategy:
+      matrix:
+        node-version: [18, 20]
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      
-      - name: Build and Push Backend
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/dcap-backend:latest
-            ${{ secrets.DOCKER_USERNAME }}/dcap-backend:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  # Deploy to Staging
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm run install:all
+
+      - name: Build shared package
+        if: needs.changes.outputs.shared == 'true'
+        run: npm run build:shared
+
+      - name: Build backend
+        if: needs.changes.outputs.backend == 'true'
+        run: npm run build:backend
+
+      - name: Build web
+        if: needs.changes.outputs.web == 'true'
+        run: npm run build:web
+
+      - name: Cache build artifacts
+        if: matrix.node-version == 20
+        uses: actions/cache@v3
+        with:
+          path: |
+            backend/dist
+            web/build
+            shared/dist
+          key: build-${{ github.sha }}
+
+  mobile-build:
+    name: Mobile Build Check
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.mobile == 'true' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm run install:all
+
+      - name: Build Android bundle (validation only)
+        run: |
+          cd mobile
+          npx react-native bundle \
+            --platform android \
+            --dev false \
+            --entry-file index.js \
+            --bundle-output android-bundle.js \
+            --assets-dest android-assets
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit
+        run: npm audit --audit-level moderate
+
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [build-docker]
-    if: github.ref == 'refs/heads/develop'
+    needs: [build, test, security-scan]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
     environment: staging
-    
     steps:
-      - name: Deploy to Staging Server
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.STAGING_HOST }}
-          username: ${{ secrets.STAGING_USER }}
-          key: ${{ secrets.STAGING_SSH_KEY }}
-          script: |
-            cd /opt/dcap
-            docker-compose pull
-            docker-compose up -d
-            docker system prune -f
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  # Deploy to Production
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Restore build cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            backend/dist
+            web/build
+            shared/dist
+          key: build-${{ github.sha }}
+
+      - name: Deploy to Azure Staging
+        run: |
+          echo "Deploying to staging environment"
+          # Add actual Azure deployment commands here
+
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [build-docker]
-    if: github.ref == 'refs/heads/main'
+    needs: [build, test, security-scan]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production
-    
     steps:
-      - name: Deploy to Production Server
-        uses: appleboy/ssh-action@v1.0.0
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          username: ${{ secrets.PRODUCTION_USER }}
-          key: ${{ secrets.PRODUCTION_SSH_KEY }}
-          script: |
-            cd /opt/dcap
-            docker-compose pull
-            docker-compose up -d --scale backend=3
-            docker system prune -f
+          node-version: 20
+          cache: 'npm'
+
+      - name: Restore build cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            backend/dist
+            web/build
+            shared/dist
+          key: build-${{ github.sha }}
+
+      - name: Deploy to Azure Production
+        run: |
+          echo "Deploying to production environment"
+          # Add actual Azure deployment commands here

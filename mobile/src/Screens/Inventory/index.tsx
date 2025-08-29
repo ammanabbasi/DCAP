@@ -236,7 +236,7 @@ const Inventory = (): any => {
               ].map(tab => (
                 <TouchableOpacity
                   key={tab?.label}
-                  onPress={async (: any) => {
+                  onPress={async () => {
                     setSelectedTab(tab?.label);
                     // handleTabClick(tab?.label);
                   }}
@@ -248,7 +248,7 @@ const Inventory = (): any => {
                     borderRadius: wp(2),
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: hp(0?.2),
+                    gap: hp(0.2),
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     paddingHorizontal: wp(2),
@@ -296,10 +296,9 @@ const Inventory = (): any => {
               />
             </>
         )}
-          </View>
-
       </View>
-      );
+    </View>
+  );
 };
 
-      export default Inventory;
+export default Inventory;

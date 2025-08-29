@@ -1473,15 +1473,15 @@ const CarModelList = ({ route }: { route: any }) => {
                 <InputBox
                   placeholder="Enter return price"
                   style={{ width: '100%' }}
-                  onChangeText={txt = numberOfCharacter={50}> {
+                  onChangeText={(txt) => {
                     setFilterData(pre => ({
                       ...pre,
                       returnPrice: txt,
                     }));
                   }}
+                  numberOfCharacter={50}
                   keyboardType="number-pad"
                   value={filterData?.returnPrice}
-                  numberOfCharacter={10}
                 />
                 {!filterData?.returnPrice && (
                   <Text style={styles.error}>Return price is required</Text>
@@ -1497,7 +1497,7 @@ const CarModelList = ({ route }: { route: any }) => {
                         : 'Select date'
                     }
                     style={{ paddingVertical: hp(0.3), width: '100%' }}
-                    onChangeText={() = numberOfCharacter={50}> { }}
+                    onChangeText={() => { }}
                     disabled
                     numberOfCharacter={20}
                   />

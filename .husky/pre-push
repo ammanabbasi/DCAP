@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run full validation before push
+echo "Running full validation before push..."
+npm run validate
+
+# Check for any TODO or FIXME comments in production code
+echo "Checking for TODO/FIXME comments..."
+if git grep -n "TODO\|FIXME" -- '*.ts' '*.tsx' '*.js' '*.jsx' ':!**/node_modules/**' ':!**/*.test.*' ':!**/*.spec.*'; then
+  echo "❌ Found TODO/FIXME comments in production code. Please resolve them before pushing."
+  exit 1
+fi
+
+echo "✅ All checks passed. Ready to push!"

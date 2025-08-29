@@ -1,39 +1,97 @@
 {
   "name": "dealerscloud-platform",
   "version": "1.0.0",
-  "description": "Full-stack automotive dealership management platform with React Native mobile app, React web dashboard, and Express.js backend",
+  "description": "DealersCloud - Full-stack automotive dealership management platform",
   "private": true,
-  "workspaces": [
-    "mobile",
-    "web",
-    "backend"
-  ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:web\" \"npm run dev:mobile\"",
-    "dev:backend": "cd backend && npm run dev",
-    "dev:web": "cd web && npm start",
-    "dev:mobile": "cd mobile && npm start",
-    "build": "npm run build:backend && npm run build:web",
+    "install:all": "npm install && npm run install:workspaces",
+    "install:workspaces": "npm install --workspaces",
+    "build": "npm run build --workspaces",
+    "build:shared": "cd shared && npm run build",
     "build:backend": "cd backend && npm run build",
     "build:web": "cd web && npm run build",
-    "test": "npm run test:backend && npm run test:web && npm run test:mobile",
+    "test": "npm run test:all",
+    "test:all": "npm run test:shared && npm run test:backend && npm run test:web && npm run test:mobile",
+    "test:shared": "cd shared && npm test",
     "test:backend": "cd backend && npm test",
     "test:web": "cd web && npm test -- --watchAll=false",
     "test:mobile": "cd mobile && npm test -- --watchAll=false",
-    "lint": "npm run lint:backend && npm run lint:web && npm run lint:mobile",
-    "lint:backend": "cd backend && npm run lint",
-    "lint:web": "cd web && npm run lint",
-    "lint:mobile": "cd mobile && npm run lint",
-    "install:all": "npm install && npm run install:backend && npm run install:web && npm run install:mobile",
-    "install:backend": "cd backend && npm install",
-    "install:web": "cd web && npm install",
-    "install:mobile": "cd mobile && npm install",
-    "clean": "rimraf node_modules backend/node_modules web/node_modules mobile/node_modules",
-    "postinstall": "npm run install:all"
+    "test:e2e": "cd e2e && npm test",
+    "test:e2e:headed": "cd e2e && npm run test:headed",
+    "test:e2e:debug": "cd e2e && npm run test:debug",
+    "test:integration": "npm run test:backend:integration && npm run test:web:integration",
+    "test:backend:integration": "cd backend && npm run test:integration",
+    "test:web:integration": "cd web && npm run test:integration",
+    "test:security": "npm run test:backend:security && npm run test:web:security",
+    "test:backend:security": "cd backend && npm run test:security", 
+    "test:web:security": "cd web && npm run test:security",
+    "test:performance": "npm run test:backend:performance && npm run test:web:performance",
+    "test:backend:performance": "cd backend && npm run test:performance",
+    "test:web:performance": "cd web && npm run test:performance",
+    "test:coverage": "npm run test:all && node scripts/test-coverage-report.js",
+    "test:coverage:performance": "npm run test:all && node scripts/test-coverage-report.js --performance",
+    "performance:monitor": "node scripts/performance-monitor.js",
+    "performance:dashboard": "node scripts/performance-monitor.js --dashboard",
+    "performance:mobile": "cd mobile && node scripts/bundle-analyzer.js",
+    "performance:web": "cd web && npm run build && node scripts/bundle-analyzer.js",
+    "performance:lighthouse": "npx lhci autorun",
+    "performance:all": "npm run performance:mobile && npm run performance:web && npm run performance:monitor",
+    "test:watch": "npm run test:watch --workspaces",
+    "test:ci": "npm run test:all && npm run test:e2e && npm run test:coverage",
+    "lint": "npm run lint --workspaces",
+    "lint:fix": "npm run lint:fix --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "clean": "npm run clean --workspaces && rimraf node_modules coverage-reports",
+    "clean:coverage": "rimraf coverage-reports */coverage",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:web\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:web": "cd web && npm start",
+    "start": "npm run dev",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,yml,yaml}\" --ignore-path .gitignore",
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md,yml,yaml}\" --ignore-path .gitignore",
+    "prepare": "husky install",
+    "security:audit": "npm audit --audit-level=moderate --workspaces",
+    "security:fix": "npm audit fix --workspaces",
+    "deps:update": "npm update --workspaces",
+    "deps:outdated": "npm outdated --workspaces",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "db:migrate": "cd backend && npm run migrate",
+    "db:seed": "cd backend && npm run seed",
+    "db:reset": "cd backend && npm run db:reset"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
-    "rimraf": "^6.0.1"
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
+    "rimraf": "^6.0.1",
+    "@types/node": "^22.10.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm run test:all && npm run typecheck"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dealerscloud/platform.git"
   },
   "keywords": [
     "automotive",
@@ -47,13 +105,5 @@
     "full-stack"
   ],
   "author": "DealersCloud Team",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/ammanabbasi/DCAP.git"
-  },
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
-  }
+  "license": "MIT"
 }

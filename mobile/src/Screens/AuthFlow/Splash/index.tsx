@@ -29,10 +29,10 @@ const Splash: React.FC<LogIn> = (props: LogIn) => {
     if (isFocused) dispatch(updateSafeAreaBackground(Colors.primary));
   }, [isFocused]);
   useEffect(() => {
-    const blurListener = navigation.addListener('blur': any, (: any) =>
+    const blurListener = navigation.addListener('blur', () =>
       dispatch(updateSafeAreaBackground('white')),
     );
-    const beforeRemoveListener = navigation.addListener('beforeRemove': any, (: any) =>
+    const beforeRemoveListener = navigation.addListener('beforeRemove', () =>
       dispatch(updateSafeAreaBackground('white')),
     );
     return () => {

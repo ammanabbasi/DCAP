@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1976d2" />
+    <meta
+      name="description"
+      content="DealersCloud - Complete automotive dealership management platform"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    
+    <!-- Preconnect to external domains for better performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Meta tags for SEO -->
+    <meta property="og:title" content="DealersCloud - Automotive Dealership Management" />
+    <meta property="og:description" content="Complete automotive dealership management platform with inventory, CRM, messaging, and analytics." />
+    <meta property="og:image" content="%PUBLIC_URL%/logo512.png" />
+    <meta property="og:url" content="https://dealerscloud.com" />
+    <meta name="twitter:card" content="summary_large_image" />
+    
+    <title>DealersCloud - Dealership Management Platform</title>
+    
+    <style>
+      /* Loading screen styles */
+      #initial-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #1976d2, #42a5f5);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      }
+      
+      #initial-loading .logo {
+        width: 80px;
+        height: 80px;
+        background: white;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        font-weight: bold;
+        color: #1976d2;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      }
+      
+      #initial-loading .title {
+        color: white;
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      
+      #initial-loading .subtitle {
+        color: rgba(255,255,255,0.8);
+        font-size: 16px;
+        margin-bottom: 32px;
+      }
+      
+      #initial-loading .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(255,255,255,0.3);
+        border-top: 4px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    
+    <!-- Initial loading screen -->
+    <div id="initial-loading">
+      <div class="logo">DC</div>
+      <div class="title">DealersCloud</div>
+      <div class="subtitle">Loading your dealership management platform...</div>
+      <div class="spinner"></div>
+    </div>
+    
+    <div id="root"></div>
+    
+    <script>
+      // Remove loading screen when app loads
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          const loadingScreen = document.getElementById('initial-loading');
+          if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            loadingScreen.style.transition = 'opacity 0.5s ease-out';
+            setTimeout(function() {
+              loadingScreen.remove();
+            }, 500);
+          }
+        }, 1000);
+      });
+    </script>
+  </body>
+</html>
